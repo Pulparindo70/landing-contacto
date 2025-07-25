@@ -1,3 +1,5 @@
+// backend/index.js
+
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -7,15 +9,16 @@ const db = require("./firebase");
 
 const app = express();
 
-// Permitir solo el frontend de Vercel
+// ✅ CORS configurado para aceptar solicitudes desde tu dominio de Vercel
 app.use(cors({
-  origin: 'https://landing-contacto-omega.vercel.app',
+  origin: ['https://landing-contacto-omega.vercel.app'],
   methods: ['POST'],
+  allowedHeaders: ['Content-Type'],
 }));
 
 app.use(bodyParser.json());
 
-// Ruta para manejar el formulario de contacto
+// ✅ Ruta POST /api/contacto con validación de campos y verificación de reCAPTCHA
 app.post("/api/contacto", async (req, res) => {
   const { nombre, correo, telefono, mensaje, captchaToken } = req.body;
 
@@ -24,6 +27,7 @@ app.post("/api/contacto", async (req, res) => {
   }
 
   try {
+    // ✅ Verificación del token de reCAPTCHA con la clave secreta
     const captchaSecret = process.env.RECAPTCHA_SECRET;
     const response = await axios.post(
       `https://www.google.com/recaptcha/api/siteverify?secret=${captchaSecret}&response=${captchaToken}`
@@ -35,6 +39,7 @@ app.post("/api/contacto", async (req, res) => {
       return res.status(400).json({ error: "Captcha inválido" });
     }
 
+    // ✅ Guarda la info en Firestore
     await db.collection("contactos").add({
       nombre,
       correo,
@@ -57,4 +62,6 @@ app.post("/api/contacto", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4334;
-app.listen(PORT, () => console.log(`Backend corriendo en http://localhost:${PORT}`));
+app.listen(PORT, () =>
+  console.log(`Backend corriendo en http://localhost:${PORT}`)
+);
