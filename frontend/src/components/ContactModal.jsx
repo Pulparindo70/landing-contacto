@@ -51,7 +51,7 @@ export default function ContactModal({ onClose }) {
     }
 
     try {
-      const res = await fetch('http://localhost:4334/api/contacto', {
+const res = await fetch('https://fearless-possibility-production.up.railway.app/api/contacto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
