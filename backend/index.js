@@ -1,5 +1,3 @@
-// backend/index.js
-
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -8,10 +6,16 @@ require("dotenv").config();
 const db = require("./firebase");
 
 const app = express();
-app.use(cors());
+
+// Permitir solo el frontend de Vercel
+app.use(cors({
+  origin: 'https://landing-contacto-omega.vercel.app',
+  methods: ['POST'],
+}));
+
 app.use(bodyParser.json());
 
-// valida captcha
+// Ruta para manejar el formulario de contacto
 app.post("/api/contacto", async (req, res) => {
   const { nombre, correo, telefono, mensaje, captchaToken } = req.body;
 
@@ -20,7 +24,6 @@ app.post("/api/contacto", async (req, res) => {
   }
 
   try {
-    // Verifica el captcha
     const captchaSecret = process.env.RECAPTCHA_SECRET;
     const response = await axios.post(
       `https://www.google.com/recaptcha/api/siteverify?secret=${captchaSecret}&response=${captchaToken}`
@@ -32,7 +35,6 @@ app.post("/api/contacto", async (req, res) => {
       return res.status(400).json({ error: "Captcha inválido" });
     }
 
-    
     await db.collection("contactos").add({
       nombre,
       correo,
