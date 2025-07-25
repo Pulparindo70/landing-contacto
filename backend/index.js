@@ -1,5 +1,3 @@
-// backend/index.js
-
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -9,16 +7,20 @@ const db = require("./firebase");
 
 const app = express();
 
-// ✅ CORS configurado para aceptar solicitudes desde tu dominio de Vercel
-app.use(cors({
-  origin: ['https://landing-contacto-omega.vercel.app'],
+// ✅ Configuración de CORS segura y funcional
+const corsOptions = {
+  origin: [
+    'http://localhost:5173', // desarrollo local
+    'https://landing-contacto-omega.vercel.app' // producción en Vercel
+  ],
   methods: ['POST'],
-  allowedHeaders: ['Content-Type'],
-}));
+  credentials: true // si necesitas enviar cookies o headers autorizados
+};
 
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
-// ✅ Ruta POST /api/contacto con validación de campos y verificación de reCAPTCHA
+// ✅ Ruta POST /api/contacto
 app.post("/api/contacto", async (req, res) => {
   const { nombre, correo, telefono, mensaje, captchaToken } = req.body;
 
@@ -27,7 +29,7 @@ app.post("/api/contacto", async (req, res) => {
   }
 
   try {
-    // ✅ Verificación del token de reCAPTCHA con la clave secreta
+    // ✅ Validar reCAPTCHA v2
     const captchaSecret = process.env.RECAPTCHA_SECRET;
     const response = await axios.post(
       `https://www.google.com/recaptcha/api/siteverify?secret=${captchaSecret}&response=${captchaToken}`
@@ -39,7 +41,7 @@ app.post("/api/contacto", async (req, res) => {
       return res.status(400).json({ error: "Captcha inválido" });
     }
 
-    // ✅ Guarda la info en Firestore
+    // ✅ Guardar en Firestore
     await db.collection("contactos").add({
       nombre,
       correo,
